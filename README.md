@@ -71,3 +71,32 @@ export default defineConfig([
   },
 ])
 ```
+
+## 🚀 Como Executar Localmente
+
+### Requisitos
+- Node.js 20+
+- npm 10+
+
+### Rodando
+
+1. Instale todas as dependências do projeto:
+   ```bash
+   npm install
+   ```
+
+2. Execute o servidor de desenvolvimento local (Vite):
+   ```bash
+   npm run dev
+   ```
+
+A aplicação estará disponível em `http://localhost:5173` para visualização e desenvolvimento interativo.
+
+### Build e Produção
+
+Para testar a compilação do projeto para produção ou rodar a build localmente:
+
+```bash
+npm run build      # gera os arquivos otimizados em dist/
+npm run preview    # visualiza localmente a build gerada
+```
