@@ -1,76 +1,53 @@
-# React + TypeScript + Vite
+# 💅 NORD NAILS — Original Técnica Russa
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Landing Page premium de altíssima fidelidade para a Nord Nails, rede de estúdios pioneira em manicure russa de alta precisão e sofisticação. Um design limpo, minimalista e altamente responsivo que reflete o cuidado e a excelência da marca.
 
-Currently, two official plugins are available:
+[![Acessar App](https://img.shields.io/badge/🌐_ACESSAR_APP-nord--nails.vercel.app-C3A58E?style=for-the-badge)](https://nord-nails.vercel.app)
+![React](https://img.shields.io/badge/React-18-61DAFB?style=for-the-badge&logo=react&logoColor=white)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-3178C6?style=for-the-badge&logo=typescript&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-5-646CFF?style=for-the-badge&logo=vite&logoColor=white)
+![TailwindCSS](https://img.shields.io/badge/TailwindCSS-3-38B2AC?style=for-the-badge&logo=tailwindcss&logoColor=white)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+🟢 **LIVE DEMO:** [Acesse o Nord Nails Ao Vivo Aqui](https://nord-nails.vercel.app)
 
-## React Compiler
+<div align="center">
+  <div style="max-width: 800px; background-color: #161b22; border: 1px solid #30363d; border-bottom: none; border-top-left-radius: 8px; border-top-right-radius: 8px; padding: 10px; font-family: monospace; font-size: 13px; color: #8b949e; text-align: left;">
+    🔴 &nbsp; 🟡 &nbsp; 🟢 &nbsp;&nbsp;&nbsp; <b>~/nord-nails-studio</b>
+  </div>
+  <div style="max-width: 800px; border: 1px solid #30363d; border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; overflow: hidden; line-height: 0;">
+    <img src="assets/nord-nails.gif" width="100%" height="auto" alt="Nord Nails Demo" />
+  </div>
+</div>
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+---
 
-## Expanding the ESLint configuration
+## 💻 Sobre o Projeto
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+A **Nord Nails** é pioneira na **Original Técnica Russa** no Brasil, um procedimento que exige extrema precisão, leveza e hardware especializado (micromotores com brocas diamantadas) para cutilagem a seco e acabamento perfeito.
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+Esta aplicação é uma Landing Page moderna criada do zero para proporcionar uma experiência fluida ao cliente final, desde a descoberta da técnica exclusiva até o agendamento de horários nas unidades.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+---
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## ✨ Principais Funcionalidades
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- 📅 **Agendamento Online** — Modal interativo de agendamento rápido com escolha de serviço, data e unidade.
+- 💅 **Lookbook Interativo** — Galeria de fotos de alta resolução demonstrando o acabamento perfeito das cutículas e esmaltações.
+- 🔬 **Seção de Técnica** — Explicação visual do método de cutilagem russa, destacando a segurança e o hardware premium utilizados.
+- 📍 **Localização e Contatos** — Facilidade para encontrar as filiais físicas do estúdio de maneira clara e rápida.
+- 📱 **Responsividade Total** — Layout otimizado para celulares, tablets e desktops com transições suaves e tipografia moderna.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+---
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+## 🛠️ Stack Tecnológico
+
+- **React 18** + **TypeScript**
+- **Vite** — Build e dev server ultra-rápido
+- **TailwindCSS** — Estilização moderna e layout responsivo
+- **Lucide React** — Ícones modernos em formato vetorial (SVG)
+- **Framer Motion** — Micro-interações sofisticadas
+
+---
 
 ## 🚀 Como Executar Localmente
 
