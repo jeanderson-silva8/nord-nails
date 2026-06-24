@@ -86,9 +86,12 @@ const Hero = () => {
             }`}
           >
             <button
-              onClick={() =>
-                window.dispatchEvent(new Event('open-agendar-modal'))
-              }
+              onClick={() => {
+                const element = document.querySelector('#unidades');
+                if (element) {
+                  element.scrollIntoView({ behavior: 'smooth' });
+                }
+              }}
               className="btn-gold flex items-center gap-3 text-sm"
             >
               <Calendar size={18} />
