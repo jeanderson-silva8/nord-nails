@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { MapPin, Phone, Clock, Calendar, ExternalLink } from 'lucide-react';
 
-interface Location {
+export interface Location {
   id: number;
   name: string;
   address: string;
@@ -16,7 +16,7 @@ interface Location {
   image: string;
 }
 
-const locations: Location[] = [
+export const locations: Location[] = [
   {
     id: 1,
     name: 'Brasília - Lago Sul',
@@ -186,7 +186,11 @@ const Locations = () => {
                 <div className="flex gap-3">
                   <button
                     onClick={() =>
-                      window.dispatchEvent(new Event('open-agendar-modal'))
+                      window.dispatchEvent(
+                        new CustomEvent('open-agendar-modal', {
+                          detail: { location },
+                        })
+                      )
                     }
                     className="flex-1 btn-primary text-xs py-3 px-4 flex items-center justify-center gap-2"
                   >

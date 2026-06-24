@@ -115,9 +115,7 @@ const Header = () => {
                 <Facebook size={20} />
               </a>
               <button
-                onClick={() =>
-                  window.dispatchEvent(new Event('open-agendar-modal'))
-                }
+                onClick={() => scrollToSection('#unidades')}
                 className="btn-primary text-xs py-3 px-6"
               >
                 Agendar
@@ -187,9 +185,7 @@ const Header = () => {
                 </a>
               </div>
               <button
-                onClick={() =>
-                  window.dispatchEvent(new Event('open-agendar-modal'))
-                }
+                onClick={() => scrollToSection('#unidades')}
                 className="btn-primary w-full text-center"
               >
                 Agendar Agora
