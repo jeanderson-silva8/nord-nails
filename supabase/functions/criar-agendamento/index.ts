@@ -7,101 +7,120 @@
 //   2. Revalida os dados no servidor (nome, telefone, data)    -> não confia no front
 //   3. Insere com a service_role; o trigger no Postgres ainda  -> limite atômico
 //      valida o limite de turno de forma atômica.
-//
-// Sempre responde 200 com um corpo { ok, code? } para o cliente tratar de forma
-// simples (sucesso, vaga cheia, captcha inválido, etc.).
-//
-// Variáveis de ambiente:
-//   - SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY  -> injetadas automaticamente
-//   - TURNSTILE_SECRET_KEY                      -> definir via `supabase secrets set`
 // =============================================================================
 
-import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
-  'Access-Control-Allow-Headers':
-    'authorization, x-client-info, apikey, content-type',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-};
+const cors = {
+  'Access-Control-Allow-Origin': '*', // Permite o acesso a partir de qualquer origem em dev/prod
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+}
 
-function json(body: unknown, status = 200) {
-  return new Response(JSON.stringify(body), {
+// Telefone BR -> E.164 (55 + DDD + número). Retorna null se inválido.
+function normalizarTelefone(raw: string): string | null {
+  let n = (raw || '').replace(/\D/g, '')         // mantém apenas dígitos
+  if (!n.startsWith('55')) n = '55' + n
+  if (!/^55\d{2}9?\d{8}$/.test(n)) return null    // formato 55 + DDD + (9 opcional) + 8 dígitos
+  return n
+}
+
+async function captchaOk(token: string, ip: string): Promise<boolean> {
+  const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY')
+  // Se o secret não estiver configurado, ignora a validação para evitar travamentos
+  if (!turnstileSecret) {
+    console.warn('TURNSTILE_SECRET_KEY não configurado no servidor. CAPTCHA ignorado.')
+    return true
+  }
+
+  const form = new FormData()
+  form.append('secret', turnstileSecret)
+  form.append('response', token)
+  if (ip) form.append('remoteip', ip)
+
+  try {
+    const r = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+      method: 'POST',
+      body: form
+    })
+    const data = await r.json()
+    return data.success === true
+  } catch (err) {
+    console.error('Erro ao validar CAPTCHA Turnstile:', err)
+    return false
+  }
+}
+
+function json(obj: unknown, status = 200) {
+  return new Response(JSON.stringify(obj), {
     status,
-    headers: { ...corsHeaders, 'content-type': 'application/json' },
-  });
+    headers: { ...cors, 'Content-Type': 'application/json' }
+  })
 }
 
 Deno.serve(async (req) => {
-  if (req.method === 'OPTIONS') return new Response('ok', { headers: corsHeaders });
-  if (req.method !== 'POST') return json({ ok: false, code: 'METHOD' }, 405);
-
+  if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
-    const { unidade, nome, telefone, dia, horario, captchaToken } =
-      await req.json();
+    const { unidade, nome, telefone, dia, horario, captchaToken } = await req.json()
 
-    // --- 1) Validação de entrada no SERVIDOR (não confiar no navegador) -------
-    if (!unidade || !nome || !nome.trim() || !dia || !horario) {
-      return json({ ok: false, code: 'DADOS_INCOMPLETOS' });
-    }
-    const phoneDigits = String(telefone ?? '').replace(/\D/g, '');
-    if (phoneDigits.length !== 11) {
-      return json({ ok: false, code: 'TELEFONE_INVALIDO' });
-    }
-    // Data não pode ser no passado (compara em UTC, data pura).
-    const hoje = new Date();
-    const hojeStr = hoje.toISOString().slice(0, 10);
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dia) || dia < hojeStr) {
-      return json({ ok: false, code: 'DATA_INVALIDA' });
-    }
+    // 1. Campos obrigatórios
+    if (!unidade || !nome || !telefone || !dia || !horario)
+      return json({ ok: false, error: 'CAMPOS', message: 'Preencha todos os campos.' })
 
-    // --- 2) CAPTCHA (Cloudflare Turnstile) verificado no servidor ------------
-    const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY');
+    // 2. Anti-robô (Turnstile)
+    // Só exige se o site key e secret estiverem ativos
+    const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY')
     if (turnstileSecret) {
-      if (!captchaToken) return json({ ok: false, code: 'CAPTCHA_AUSENTE' });
-      const verify = await fetch(
-        'https://challenges.cloudflare.com/turnstile/v0/siteverify',
-        {
-          method: 'POST',
-          headers: { 'content-type': 'application/x-www-form-urlencoded' },
-          body: new URLSearchParams({
-            secret: turnstileSecret,
-            response: captchaToken,
-            remoteip: req.headers.get('CF-Connecting-IP') ?? '',
-          }),
-        }
-      );
-      const outcome = await verify.json();
-      if (!outcome.success) return json({ ok: false, code: 'CAPTCHA_INVALIDO' });
+      if (!captchaToken) {
+        return json({ ok: false, error: 'CAPTCHA', code: 'CAPTCHA_AUSENTE', message: 'Verificação anti-robô ausente.' })
+      }
+      const ip = req.headers.get('CF-Connecting-IP') || req.headers.get('x-forwarded-for') || ''
+      if (!(await captchaOk(captchaToken, ip))) {
+        return json({ ok: false, error: 'CAPTCHA', code: 'CAPTCHA_INVALIDO', message: 'Verificação anti-robô falhou.' })
+      }
     }
 
-    // --- 3) Insert com service_role (bypassa RLS); trigger valida o limite ---
+    // 3. Validação de Nome
+    const nomeLimpo = String(nome).trim()
+    if (nomeLimpo.length < 2 || nomeLimpo.length > 100)
+      return json({ ok: false, error: 'NOME', message: 'Nome inválido (mínimo 2 caracteres).' })
+
+    // 4. Telefone -> Normalização E.164
+    const tel = normalizarTelefone(telefone)
+    if (!tel) return json({ ok: false, error: 'TELEFONE', code: 'TELEFONE_INVALIDO', message: 'Telefone inválido.' })
+
+    // 5. Data não pode ser no passado
+    const hoje = new Date()
+    hoje.setHours(0, 0, 0, 0)
+    if (new Date(dia + 'T00:00:00') < hoje)
+      return json({ ok: false, error: 'DATA', code: 'DATA_INVALIDA', message: 'Escolha uma data futura.' })
+
+    // 6. Insere com a service_role (ignora RLS, dispara o trigger de limite)
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL')!,
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
-    );
+    )
+    const { data, error } = await supabase
+      .from('agendamentos')
+      .insert({ unidade, nome: nomeLimpo, telefone: tel, dia, horario })
+      .select('id').single()
 
-    const { error } = await supabase.from('agendamentos').insert([
-      {
-        unidade,
-        nome: nome.trim(),
-        telefone: telefone.trim(),
-        dia,
-        horario,
-      },
-    ]);
-
+    // 7. Trigger barrou por lotação?
     if (error) {
-      if (error.message.includes('LIMITE_TURNO_ATINGIDO')) {
-        return json({ ok: false, code: 'LIMITE_TURNO_ATINGIDO' });
+      if (error.hint === 'LIMITE_VAGAS' || (error.message || '').includes('Limite de vagas')) {
+        return json({ 
+          ok: false, 
+          error: 'LIMITE_VAGAS', 
+          code: 'LIMITE_TURNO_ATINGIDO', 
+          message: error.message 
+        })
       }
-      console.error('Erro ao inserir agendamento:', error.message);
-      return json({ ok: false, code: 'ERRO_INSERT' });
+      console.error('Erro ao inserir agendamento:', error.message)
+      return json({ ok: false, error: 'ERRO', message: 'Não foi possível agendar.' }, 500)
     }
 
-    return json({ ok: true });
+    return json({ ok: true, id: data.id })
   } catch (err) {
-    console.error('Erro inesperado na função:', err);
-    return json({ ok: false, code: 'ERRO_INTERNO' }, 500);
+    console.error('Erro interno na Edge Function:', err)
+    return json({ ok: false, error: 'ERRO', message: 'Erro interno no servidor.' }, 500)
   }
-});
+})
