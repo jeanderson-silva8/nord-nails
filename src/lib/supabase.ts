@@ -11,7 +11,7 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
       const createMock = (): any => {
         const mockFn = () => mockProxy;
         const mockProxy: any = new Proxy(mockFn, {
-          get(target, prop) {
+          get(_target, prop) {
             if (prop === 'then') {
               // Permite que o mock se comporte como uma Promise e resolva de forma limpa
               return (resolve: any) => resolve({ data: [], error: null, ok: false, message: 'Supabase não configurado.' });
