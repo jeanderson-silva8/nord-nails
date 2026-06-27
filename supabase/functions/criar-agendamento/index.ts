@@ -26,10 +26,12 @@ function normalizarTelefone(raw: string): string | null {
 
 async function captchaOk(token: string, ip: string): Promise<boolean> {
   const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY')
-  // Se o secret não estiver configurado, ignora a validação para evitar travamentos
+  // FAIL-CLOSED: sem o secret não há como validar o token -> recusa em vez de
+  // liberar. Liberar aqui (fail-open) faria o anti-robô sumir por completo caso
+  // a env var faltasse no servidor, abrindo a agenda pra spam via curl.
   if (!turnstileSecret) {
-    console.warn('TURNSTILE_SECRET_KEY não configurado no servidor. CAPTCHA ignorado.')
-    return true
+    console.error('TURNSTILE_SECRET_KEY ausente no servidor — recusando por segurança (fail-closed).')
+    return false
   }
 
   const form = new FormData()
@@ -66,10 +68,12 @@ Deno.serve(async (req) => {
     if (!unidade || !nome || !telefone || !dia || !horario)
       return json({ ok: false, error: 'CAMPOS', message: 'Preencha todos os campos.' })
 
-    // 2. Anti-robô (Turnstile)
-    // Só exige se o site key e secret estiverem ativos
-    const turnstileSecret = Deno.env.get('TURNSTILE_SECRET_KEY')
-    if (turnstileSecret) {
+    // 2. Anti-robô (Turnstile) — FAIL-CLOSED por padrão.
+    // SEMPRE exige e valida o captcha. A única forma de pular é setar
+    // explicitamente ALLOW_NO_CAPTCHA=true no servidor (uso consciente em
+    // dev/teste). Em produção, basta NÃO setar essa flag.
+    const allowNoCaptcha = Deno.env.get('ALLOW_NO_CAPTCHA') === 'true'
+    if (!allowNoCaptcha) {
       if (!captchaToken) {
         return json({ ok: false, error: 'CAPTCHA', code: 'CAPTCHA_AUSENTE', message: 'Verificação anti-robô ausente.' })
       }
