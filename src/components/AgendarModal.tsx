@@ -322,9 +322,20 @@ const AgendarModal = ({ isOpen, onClose, initialLocation }: AgendarModalProps) =
           setIsSuccess(true);
         }
       } else {
-        console.warn('Supabase não configurado no arquivo .env. Os dados não foram salvos no banco.');
-        // Para testes locais se não houver variáveis configuradas
-        setIsSuccess(true);
+        // As variáveis VITE_SUPABASE_* não entraram no build (ex.: faltam no
+        // painel da Vercel). Sem elas NÃO há como gravar — então mostramos um
+        // erro de verdade em vez de uma falsa tela de sucesso que esconde o
+        // problema e faz o agendamento "sumir".
+        console.error(
+          'Supabase não configurado: VITE_SUPABASE_URL / VITE_SUPABASE_ANON_KEY ausentes no build. ' +
+            'Configure as variáveis de ambiente (local: .env | produção: painel da Vercel) e refaça o deploy.'
+        );
+        alert(
+          'O sistema de agendamentos não está configurado no momento. ' +
+            'Por favor, entre em contato pelo WhatsApp para concluir seu agendamento.'
+        );
+        resetCaptcha();
+        setIsSubmitting(false);
       }
     } catch (err) {
       console.error('Erro de conexão com o servidor:', err);
