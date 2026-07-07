@@ -200,7 +200,9 @@ const Technique = () => {
 
             <button
               onClick={() =>
-                window.dispatchEvent(new Event('open-agendar-modal'))
+                document
+                  .querySelector('#unidades')
+                  ?.scrollIntoView({ behavior: 'smooth' })
               }
               className="btn-primary mt-8 flex items-center gap-2"
             >

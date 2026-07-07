@@ -172,7 +172,9 @@ const Footer = () => {
       <div className="fixed bottom-6 right-6 z-40">
         <button
           onClick={() =>
-            window.dispatchEvent(new Event('open-agendar-modal'))
+            document
+              .querySelector('#unidades')
+              ?.scrollIntoView({ behavior: 'smooth' })
           }
           className="w-14 h-14 bg-[#c97d6a] rounded-full shadow-lg flex items-center justify-center text-white hover:bg-[#b56a57] hover:scale-110 transition-all"
           title="Agendar"

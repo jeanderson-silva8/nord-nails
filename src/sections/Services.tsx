@@ -160,7 +160,9 @@ const Services = () => {
                     </div>
                     <button
                       onClick={() =>
-                        window.dispatchEvent(new Event('open-agendar-modal'))
+                        document
+                          .querySelector('#unidades')
+                          ?.scrollIntoView({ behavior: 'smooth' })
                       }
                       className="btn-primary text-xs py-3 px-6 flex items-center gap-2"
                     >
@@ -217,7 +219,9 @@ const Services = () => {
                     </div>
                     <button
                       onClick={() =>
-                        window.dispatchEvent(new Event('open-agendar-modal'))
+                        document
+                          .querySelector('#unidades')
+                          ?.scrollIntoView({ behavior: 'smooth' })
                       }
                       className="text-[#c97d6a] font-body text-xs uppercase tracking-wider hover:text-[#b56a57] transition-colors"
                     >
