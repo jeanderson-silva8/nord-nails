@@ -11,9 +11,22 @@
 
 import { createClient } from 'jsr:@supabase/supabase-js@2'
 
-const cors = {
-  'Access-Control-Allow-Origin': '*', // Permite o acesso a partir de qualquer origem em dev/prod
-  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+// Origens autorizadas a chamar esta função (domínios do site público).
+// Em vez de liberar geral ('*') ou travar num único domínio (o que quebrava o
+// endereço da Vercel), refletimos a origem quando ela está nesta lista.
+const allowedOrigins = new Set([
+  'https://nordnails.com.br',
+  'https://www.nordnails.com.br',
+  'https://nord-nails.vercel.app',
+])
+
+function corsHeaders(origin: string | null) {
+  const allow = origin && allowedOrigins.has(origin) ? origin : 'https://nordnails.com.br'
+  return {
+    'Access-Control-Allow-Origin': allow,
+    'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+    'Vary': 'Origin',
+  }
 }
 
 // Telefone BR -> E.164 (55 + DDD + número). Retorna null se inválido.
@@ -52,14 +65,15 @@ async function captchaOk(token: string, ip: string): Promise<boolean> {
   }
 }
 
-function json(obj: unknown, status = 200) {
-  return new Response(JSON.stringify(obj), {
-    status,
-    headers: { ...cors, 'Content-Type': 'application/json' }
-  })
-}
-
 Deno.serve(async (req) => {
+  // CORS por requisição: reflete a origem se estiver na allowlist.
+  const cors = corsHeaders(req.headers.get('Origin'))
+  const json = (obj: unknown, status = 200) =>
+    new Response(JSON.stringify(obj), {
+      status,
+      headers: { ...cors, 'Content-Type': 'application/json' },
+    })
+
   if (req.method === 'OPTIONS') return new Response('ok', { headers: cors })
   try {
     const { unidade, nome, telefone, dia, horario, captchaToken } = await req.json()
